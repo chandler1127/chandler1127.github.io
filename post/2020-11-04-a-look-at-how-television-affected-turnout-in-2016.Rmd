@@ -1,9 +1,0 @@
----
-title: A Look at how Television Affected Turnout in 2016
-author: Chandler L'Hommedieu
-date: '2020-11-04'
-slug: a-look-at-how-television-affected-turnout-in-2016
-categories: []
-tags: []
----
-
