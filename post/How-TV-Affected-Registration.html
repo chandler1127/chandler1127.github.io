@@ -1,0 +1,1205 @@
+---
+title: How TV Affected Registration in the 2016 Election
+author: 'Chandler LHommedieu'
+date: '2020-11-14'
+slug: []
+categories: []
+tags: []
+---
+
+<link href="/rmarkdown-libs/anchor-sections/anchor-sections.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/anchor-sections/anchor-sections.js"></script>
+
+
+<p>This post will be very similar to my last. This post will cover the code and my findings for how the TV shows from the ANES 2016 survey affected registration in 2016. From my last post you will remember that very few shows had an affect on turnout. I predict that since registration is an easier action to preform the shows that had an affect on turnout will just have a more pronounced affect on registration with perhaps a few more shows having a significant affect on registration. What I mean by registration is whether or not the respondent was registered to vote in 2016 just as a clarification. Below is the complete code. The grouping and regression methods were the same for here aswell.</p>
+<div id="libraries" class="section level3">
+<h3>Libraries</h3>
+<pre class="r"><code>library(ggplot2)
+
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages -------------------------------------------------------------------------------------------------------- tidyverse 1.3.0 --</code></pre>
+<pre><code>## v tibble  3.0.3     v dplyr   1.0.2
+## v tidyr   1.1.2     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.5.0
+## v purrr   0.3.4</code></pre>
+<pre><code>## -- Conflicts ----------------------------------------------------------------------------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(anesr)
+
+library(coefplot)</code></pre>
+<pre><code>## Warning: package &#39;coefplot&#39; was built under R version 4.0.3</code></pre>
+</div>
+<div id="data" class="section level3">
+<h3>Data</h3>
+<pre class="r"><code>data(&quot;timeseries_2016&quot;)
+
+anes16 &lt;- timeseries_2016 
+
+TV &lt;- anes16 %&gt;% select(V161364, V161365, V161366, V161367, V161368, V161369, V161370, V161371, V161372, V161373, V161374, V161375, V161376, V161377, V161378, V161379, V161380, V161381, V161382, V161383, V161384, V161385, V161386, V161387, V161388, V161389, V161390, V161391, V161392, V161393, V161394, V161395, V161396, V161397, V161398, V161399, V161400, V161401, V161402, V161403, V161404, V161405, V161406, V161407, V161408, V161409, V161410, V161411, V162034) 
+
+Did_You_register &lt;- anes16 %&gt;% select(V161011)
+
+Did_You_Vote &lt;- anes16 %&gt;% select(V162034)
+
+TV_Cleaned &lt;- read.csv(&quot;C:/Users/Owner/Downloads/TV Cleaned - Sheet1.csv&quot;)</code></pre>
+</div>
+<div id="data-grouped" class="section level3">
+<h3>Data Grouped</h3>
+<pre class="r"><code>Traditional_Political_News_Programs &lt;- TV %&gt;% select(V161364, V161367, V161380, V161384, V161388, V161390, V161396, V161399, V161405)
+
+Entertainment_or_Opinion_Political_News_Programs &lt;- TV %&gt;% select(V161365, V161370, V161371, V161372, V161375, V161379, V161381, V161382, V161386,V161391, V161393, V161400, V161403, V161404, V161409)
+
+Entertainment_Programs_that_are_Expressly_Political &lt;- TV %&gt;% select(V161385, V161389, V161402, V161406,V161411)
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue &lt;- TV %&gt;% select(V161366, V161368, V161374, V161377, V161387, V161392, V161397, V161401)
+
+Entertainment_Programs_with_little_to_No_Political_Content &lt;- TV %&gt;% select(V161369, V161373, V161376, V161378, V161383, V161394, V161395, V161398, V161407, V161410)
+
+Twenty_Twenty &lt;- TV %&gt;% select (V161364) %&gt;% unlist()
+All_In_with_Chris_Hayes &lt;- TV %&gt;% select (V161365) %&gt;% unlist()
+The_Blacklist &lt;- TV %&gt;% select (V161366) %&gt;% unlist()
+CBS_Evening_News_with_Scott_Pelley &lt;- TV %&gt;% select (V161367) %&gt;% unlist()
+Criminal_Minds &lt;- TV %&gt;% select (V161368) %&gt;% unlist()
+Empire &lt;- TV %&gt;% select (V161369) %&gt;% unlist()
+Hannity &lt;- TV %&gt;% select (V161370) %&gt;% unlist()
+Jimmy_Kimmel_Live &lt;- TV %&gt;% select (V161371) %&gt;% unlist()
+The_Kelly_File &lt;- TV %&gt;% select (V161372) %&gt;% unlist()
+Modern_Family &lt;- TV %&gt;% select (V161373) %&gt;% unlist()
+NCIS &lt;-  TV %&gt;% select (V161374) %&gt;% unlist()
+The_Nightly_Show_with_Larry_Wilmore &lt;- TV %&gt;% select (V161375) %&gt;% unlist()
+Sunday_Night_Football &lt;-  TV %&gt;% select (V161376) %&gt;% unlist()
+Scorpion &lt;-  TV %&gt;% select (V161377) %&gt;% unlist()
+The_Simpsons &lt;-  TV %&gt;% select (V161378) %&gt;% unlist()
+Today &lt;- TV %&gt;% select (V161379) %&gt;% unlist()
+Sixty_Minutes &lt;- TV %&gt;% select (V161380) %&gt;% unlist()
+Anderson_Cooper_Three_Hundred_and_Sixty &lt;- TV %&gt;% select (V161381) %&gt;% unlist()
+CBS_This_Morning &lt;- TV %&gt;% select (V161382) %&gt;% unlist()
+Dancing_with_the_Stars &lt;-  TV %&gt;% select (V161383) %&gt;% unlist()
+Face_the_Nation &lt;- TV %&gt;% select (V161384) %&gt;% unlist()
+House_of_Cards &lt;- TV %&gt;% select (V161385) %&gt;% unlist()
+Hardball_with_Chris_Matthews &lt;- TV %&gt;% select (V161386) %&gt;% unlist()
+Judge_Judy &lt;- TV %&gt;% select (V161387) %&gt;% unlist()
+Meet_the_Press  &lt;- TV %&gt;% select (V161388) %&gt;% unlist()
+Game_of_Thrones &lt;- TV %&gt;% select (V161389) %&gt;% unlist()
+NBC_Nightly_News_with_Lester_Holt &lt;- TV %&gt;% select (V161390) %&gt;% unlist()
+On_the_Record_with_Greta_Van_Susteren &lt;- TV %&gt;% select (V161391) %&gt;% unlist()
+Daredevil &lt;- TV %&gt;% select (V161392) %&gt;% unlist()
+The_Rachel_Maddow_Show &lt;- TV %&gt;% select (V161393) %&gt;% unlist()
+Shark_Tank &lt;- TV %&gt;% select (V161394) %&gt;% unlist()
+The_Voice &lt;- TV %&gt;% select(V161395) %&gt;% unlist()
+ABC_World_News_with_David_Muir &lt;- TV %&gt;% select (V161396) %&gt;% unlist()
+Blue_bloods &lt;-  TV %&gt;% select (V161397) %&gt;% unlist()
+Conan &lt;-  TV %&gt;% select (V161398) %&gt;% unlist()
+Dateline_NBC &lt;- TV %&gt;% select (V161399) %&gt;% unlist()
+Good_Morning_America &lt;- TV %&gt;% select (V161400) %&gt;% unlist()
+Hawaii_Five_O &lt;- TV %&gt;% select (V161401) %&gt;% unlist()
+Madam_Secretary &lt;- TV %&gt;% select (V161402) %&gt;% unlist()
+Nancy_Grace &lt;- TV %&gt;% select (V161403) %&gt;% unlist()
+Erin_Burnett_OutFront &lt;- TV %&gt;% select (V161404) %&gt;% unlist()
+PBS_News_Hour &lt;-  TV %&gt;% select (V161405) %&gt;% unlist()
+Scandal &lt;- TV %&gt;% select (V161406) %&gt;% unlist()
+The_Big_Bang_Theory &lt;- TV %&gt;% select (V161407) %&gt;% unlist()
+The_Late_Show_with_Stephen_Colbert &lt;- TV %&gt;% select(V161408) %&gt;% unlist()
+The_O_Reilly_Factor &lt;-   TV %&gt;% select (V161409) %&gt;% unlist()
+The_Tonight_Show_Starring_Jimmy_Fallon &lt;- TV %&gt;% select(V161410) %&gt;% unlist()
+Alpha_House &lt;- TV %&gt;% select(V161411) %&gt;% unlist()</code></pre>
+</div>
+<div id="regression-for-traditional-political-news-programs-and-registration-status" class="section level3">
+<h3>Regression for Traditional Political News Programs and Registration Status</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Traditional_Political_News_Programs_Moded_register &lt;- as.data.frame(Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Traditional_Political_News_Programs_Moded_register_lm &lt;- lm(register ~  Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour , data = anes_clean)
+
+summary(Traditional_Political_News_Programs_Moded_register_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + 
+##     Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + 
+##     ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.93896  0.09838  0.11395  0.11481  0.16332 
+## 
+## Coefficients:
+##                                     Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                         0.886049   0.005740 154.370  &lt; 2e-16 ***
+## Twenty_Twenty                      -0.026446   0.016029  -1.650  0.09906 .  
+## CBS_Evening_News_with_Scott_Pelley  0.001472   0.015907   0.093  0.92629    
+## Sixty_Minutes                       0.040931   0.014374   2.848  0.00443 ** 
+## Face_the_Nation                    -0.004791   0.020027  -0.239  0.81094    
+## Meet_the_Press                      0.014095   0.018872   0.747  0.45519    
+## NBC_Nightly_News_with_Lester_Holt  -0.015514   0.014593  -1.063  0.28779    
+## ABC_World_News_with_David_Muir     -0.001669   0.014827  -0.113  0.91041    
+## Dateline_NBC                       -0.002117   0.014918  -0.142  0.88716    
+## PBS_News_Hour                      -0.005097   0.016524  -0.308  0.75774    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3141 on 3647 degrees of freedom
+##   (613 observations deleted due to missingness)
+## Multiple R-squared:  0.002958,   Adjusted R-squared:  0.0004978 
+## F-statistic: 1.202 on 9 and 3647 DF,  p-value: 0.2886</code></pre>
+<pre class="r"><code>coefplot::coefplot(Traditional_Political_News_Programs_Moded_register_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-4-1.png" width="672" />
+### Regression for Entertainment or Opinion Political News Programs and Registration Status ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_or_Opinion_Political_News_Programs_Moded_register &lt;- as.data.frame(All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_or_Opinion_Political_News_Programs_Moded_register_lm &lt;- lm(register ~ All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor , data = anes_clean)
+
+summary(Entertainment_or_Opinion_Political_News_Programs_Moded_register_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + 
+##     The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + 
+##     Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + 
+##     Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + 
+##     The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + 
+##     Erin_Burnett_OutFront + The_O_Reilly_Factor, data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.96175  0.08864  0.11676  0.11789  0.20624 
+## 
+## Coefficients:
+##                                          Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)                              0.882114   0.006541 134.869   &lt;2e-16
+## All_In_with_Chris_Hayes                  0.028958   0.033518   0.864   0.3877
+## Hannity                                  0.032190   0.022788   1.413   0.1579
+## Jimmy_Kimmel_Live                       -0.027391   0.017865  -1.533   0.1253
+## The_Kelly_File                           0.004372   0.023671   0.185   0.8535
+## The_Nightly_Show_with_Larry_Wilmore      0.008414   0.033326   0.252   0.8007
+## Today                                    0.002668   0.014701   0.182   0.8560
+## Anderson_Cooper_Three_Hundred_and_Sixty  0.017612   0.016934   1.040   0.2984
+## CBS_This_Morning                         0.007104   0.015093   0.471   0.6379
+## Hardball_with_Chris_Matthews            -0.013880   0.026748  -0.519   0.6038
+## On_the_Record_with_Greta_Van_Susteren    0.006993   0.024061   0.291   0.7714
+## The_Rachel_Maddow_Show                   0.026575   0.025232   1.053   0.2923
+## Good_Morning_America                     0.001130   0.013801   0.082   0.9347
+## Nancy_Grace                             -0.058901   0.024809  -2.374   0.0176
+## Erin_Burnett_OutFront                   -0.055302   0.029593  -1.869   0.0617
+## The_O_Reilly_Factor                      0.018471   0.021134   0.874   0.3822
+##                                            
+## (Intercept)                             ***
+## All_In_with_Chris_Hayes                    
+## Hannity                                    
+## Jimmy_Kimmel_Live                          
+## The_Kelly_File                             
+## The_Nightly_Show_with_Larry_Wilmore        
+## Today                                      
+## Anderson_Cooper_Three_Hundred_and_Sixty    
+## CBS_This_Morning                           
+## Hardball_with_Chris_Matthews               
+## On_the_Record_with_Greta_Van_Susteren      
+## The_Rachel_Maddow_Show                     
+## Good_Morning_America                       
+## Nancy_Grace                             *  
+## Erin_Burnett_OutFront                   .  
+## The_O_Reilly_Factor                        
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3139 on 3641 degrees of freedom
+##   (613 observations deleted due to missingness)
+## Multiple R-squared:  0.006216,   Adjusted R-squared:  0.002122 
+## F-statistic: 1.518 on 15 and 3641 DF,  p-value: 0.08976</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_or_Opinion_Political_News_Programs_Moded_register_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+### Regression for Entertainment Programs that are Expressly Political and Registration Staus ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_Programs_that_are_Expressly_Political_Moded_register &lt;- as.data.frame(House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_that_are_Expressly_Political_Moded_register_lm &lt;- lm(register ~  House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House , data = anes_clean)
+
+summary(Entertainment_Programs_that_are_Expressly_Political_Moded_register_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ House_of_Cards + Game_of_Thrones + Madam_Secretary + 
+##     Scandal + Alpha_House, data = anes_clean)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.9735  0.1156  0.1166  0.1166  0.2078 
+## 
+## Coefficients:
+##                  Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)      0.883379   0.005889 150.015   &lt;2e-16 ***
+## House_of_Cards  -0.001518   0.019672  -0.077   0.9385    
+## Game_of_Thrones -0.003651   0.016716  -0.218   0.8271    
+## Madam_Secretary  0.090127   0.018025   5.000    6e-07 ***
+## Scandal         -0.025282   0.019136  -1.321   0.1865    
+## Alpha_House     -0.060735   0.028730  -2.114   0.0346 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3133 on 3651 degrees of freedom
+##   (613 observations deleted due to missingness)
+## Multiple R-squared:  0.006813,   Adjusted R-squared:  0.005453 
+## F-statistic: 5.009 on 5 and 3651 DF,  p-value: 0.0001412</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_that_are_Expressly_Political_Moded_register_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+### Regresion for Entertainment Programs that are not Expressly Political but Focus on a salient Political issue and Registration Status ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register &lt;- as.data.frame( The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_lm &lt;- lm(register ~ The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O, data = anes_clean)
+
+summary(Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ The_Blacklist + Criminal_Minds + NCIS + 
+##     Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.94945  0.08446  0.11471  0.11475  0.22492 
+## 
+## Coefficients:
+##                 Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)     0.885293   0.005809 152.410  &lt; 2e-16 ***
+## The_Blacklist   0.028843   0.017229   1.674 0.094204 .  
+## Criminal_Minds -0.054525   0.015175  -3.593 0.000331 ***
+## NCIS            0.033909   0.015429   2.198 0.028029 *  
+## Scorpion        0.007680   0.021326   0.360 0.718757    
+## Judge_Judy     -0.011240   0.015910  -0.706 0.479966    
+## Daredevil      -0.044447   0.022140  -2.007 0.044772 *  
+## Blue_bloods     0.030245   0.017401   1.738 0.082279 .  
+## Hawaii_Five_O   0.009572   0.020639   0.464 0.642847    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3134 on 3648 degrees of freedom
+##   (613 observations deleted due to missingness)
+## Multiple R-squared:  0.007559,   Adjusted R-squared:  0.005383 
+## F-statistic: 3.473 on 8 and 3648 DF,  p-value: 0.0005339</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="regresion-for-entertainment-programs-with-little-to-no-political-content-and-registration-status" class="section level3">
+<h3>Regresion for Entertainment Programs with little to No Political Content and Registration Status</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_Programs_with_little_to_No_Political_Content_moded_register &lt;- as.data.frame(Empire + Modern_Family + Sunday_Night_Football + The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_with_little_to_No_Political_Content_moded_register_lm &lt;- lm(register ~ Empire + Modern_Family + Sunday_Night_Football + The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon, data = anes_clean)
+
+summary(Entertainment_Programs_with_little_to_No_Political_Content_moded_register_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Empire + Modern_Family + Sunday_Night_Football + 
+##     The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + 
+##     Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.93569  0.09702  0.11303  0.11530  0.17226 
+## 
+## Coefficients:
+##                                          Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)                             0.8847039  0.0065567 134.931   &lt;2e-16
+## Empire                                 -0.0009329  0.0197878  -0.047   0.9624
+## Modern_Family                          -0.0053083  0.0154238  -0.344   0.7307
+## Sunday_Night_Football                   0.0109999  0.0116888   0.941   0.3467
+## The_Simpsons                           -0.0272794  0.0221814  -1.230   0.2188
+## Dancing_with_the_Stars                  0.0263595  0.0157774   1.671   0.0949
+## Shark_Tank                             -0.0008137  0.0154739  -0.053   0.9581
+## The_Voice                              -0.0282772  0.0149315  -1.894   0.0583
+## Conan                                   0.0038973  0.0245951   0.158   0.8741
+## The_Big_Bang_Theory                     0.0136240  0.0129009   1.056   0.2910
+## The_Tonight_Show_Starring_Jimmy_Fallon  0.0054670  0.0150780   0.363   0.7169
+##                                           
+## (Intercept)                            ***
+## Empire                                    
+## Modern_Family                             
+## Sunday_Night_Football                     
+## The_Simpsons                              
+## Dancing_with_the_Stars                 .  
+## Shark_Tank                                
+## The_Voice                              .  
+## Conan                                     
+## The_Big_Bang_Theory                       
+## The_Tonight_Show_Starring_Jimmy_Fallon    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3143 on 3646 degrees of freedom
+##   (613 observations deleted due to missingness)
+## Multiple R-squared:  0.002263,   Adjusted R-squared:  -0.0004739 
+## F-statistic: 0.8268 on 10 and 3646 DF,  p-value: 0.6027</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_with_little_to_No_Political_Content_moded_register_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+<div id="regression-for-all-variables-and-registration-status" class="section level3">
+<h3>Regression for All Variables and Registration Status</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+
+All_Variables_Moded_register &lt;- as.data.frame(Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour + All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor + House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House + The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O + Empire + Modern_Family + Sunday_Night_Football +  The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+All_Variables_Moded_register_lm &lt;- lm(register ~ Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour + All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor + House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House + The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O + Empire + Modern_Family + Sunday_Night_Football +  The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon, data = anes_clean)
+
+summary(All_Variables_Moded_register_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + 
+##     Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + 
+##     ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour + 
+##     All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + 
+##     The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + 
+##     CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + 
+##     The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + 
+##     Erin_Burnett_OutFront + The_O_Reilly_Factor + House_of_Cards + 
+##     Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House + 
+##     The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + 
+##     Daredevil + Blue_bloods + Hawaii_Five_O + Empire + Modern_Family + 
+##     Sunday_Night_Football + The_Simpsons + Dancing_with_the_Stars + 
+##     Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.00930  0.06459  0.11238  0.12648  0.27803 
+## 
+## Coefficients:
+##                                           Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)                              8.754e-01  8.243e-03 106.208  &lt; 2e-16
+## Twenty_Twenty                           -1.716e-02  1.657e-02  -1.036  0.30049
+## CBS_Evening_News_with_Scott_Pelley       3.701e-03  1.692e-02   0.219  0.82687
+## Sixty_Minutes                            3.343e-02  1.467e-02   2.278  0.02276
+## Face_the_Nation                          3.682e-03  2.097e-02   0.176  0.86061
+## Meet_the_Press                           5.092e-03  1.996e-02   0.255  0.79862
+## NBC_Nightly_News_with_Lester_Holt       -1.361e-02  1.532e-02  -0.888  0.37451
+## ABC_World_News_with_David_Muir           8.684e-03  1.595e-02   0.544  0.58613
+## Dateline_NBC                             1.031e-02  1.541e-02   0.669  0.50358
+## PBS_News_Hour                            2.221e-03  1.791e-02   0.124  0.90129
+## All_In_with_Chris_Hayes                  3.678e-02  3.417e-02   1.076  0.28183
+## Hannity                                  3.455e-02  2.290e-02   1.509  0.13143
+## Jimmy_Kimmel_Live                       -1.497e-02  1.979e-02  -0.756  0.44952
+## The_Kelly_File                           4.806e-03  2.373e-02   0.203  0.83951
+## The_Nightly_Show_with_Larry_Wilmore      3.946e-02  3.854e-02   1.024  0.30601
+## Today                                    3.063e-03  1.580e-02   0.194  0.84624
+## Anderson_Cooper_Three_Hundred_and_Sixty  9.546e-03  1.744e-02   0.547  0.58421
+## CBS_This_Morning                        -4.693e-03  1.626e-02  -0.289  0.77283
+## Hardball_with_Chris_Matthews            -2.033e-02  2.732e-02  -0.744  0.45683
+## On_the_Record_with_Greta_Van_Susteren    1.034e-02  2.437e-02   0.424  0.67138
+## The_Rachel_Maddow_Show                   2.623e-02  2.554e-02   1.027  0.30442
+## Good_Morning_America                     2.280e-03  1.473e-02   0.155  0.87698
+## Nancy_Grace                             -3.706e-02  2.694e-02  -1.376  0.16892
+## Erin_Burnett_OutFront                   -4.853e-02  3.151e-02  -1.540  0.12354
+## The_O_Reilly_Factor                      9.792e-03  2.129e-02   0.460  0.64560
+## House_of_Cards                          -3.973e-03  2.047e-02  -0.194  0.84614
+## Game_of_Thrones                          5.555e-03  1.753e-02   0.317  0.75134
+## Madam_Secretary                          5.581e-02  2.071e-02   2.695  0.00707
+## Scandal                                 -4.094e-03  2.118e-02  -0.193  0.84672
+## Alpha_House                             -6.627e-02  5.383e-02  -1.231  0.21838
+## The_Blacklist                            2.730e-02  1.851e-02   1.475  0.14039
+## Criminal_Minds                          -3.869e-02  1.563e-02  -2.476  0.01335
+## NCIS                                     2.617e-02  1.566e-02   1.671  0.09474
+## Scorpion                                 5.940e-03  2.269e-02   0.262  0.79350
+## Judge_Judy                              -2.770e-06  1.763e-02   0.000  0.99987
+## Daredevil                                4.541e-03  2.981e-02   0.152  0.87893
+## Blue_bloods                              2.131e-02  1.803e-02   1.182  0.23730
+## Hawaii_Five_O                            1.194e-02  2.118e-02   0.564  0.57307
+## Empire                                  -1.353e-02  2.238e-02  -0.604  0.54566
+## Modern_Family                           -5.098e-03  1.570e-02  -0.325  0.74549
+## Sunday_Night_Football                   -1.901e-03  1.194e-02  -0.159  0.87358
+## The_Simpsons                            -4.008e-02  2.376e-02  -1.687  0.09175
+## Dancing_with_the_Stars                   8.083e-03  1.659e-02   0.487  0.62606
+## Shark_Tank                              -9.177e-03  1.595e-02  -0.575  0.56510
+## The_Voice                               -3.988e-02  1.533e-02  -2.601  0.00934
+## Conan                                   -3.357e-02  2.882e-02  -1.165  0.24419
+## The_Big_Bang_Theory                      6.567e-04  1.342e-02   0.049  0.96098
+## The_Tonight_Show_Starring_Jimmy_Fallon  -1.235e-03  1.613e-02  -0.077  0.93900
+##                                            
+## (Intercept)                             ***
+## Twenty_Twenty                              
+## CBS_Evening_News_with_Scott_Pelley         
+## Sixty_Minutes                           *  
+## Face_the_Nation                            
+## Meet_the_Press                             
+## NBC_Nightly_News_with_Lester_Holt          
+## ABC_World_News_with_David_Muir             
+## Dateline_NBC                               
+## PBS_News_Hour                              
+## All_In_with_Chris_Hayes                    
+## Hannity                                    
+## Jimmy_Kimmel_Live                          
+## The_Kelly_File                             
+## The_Nightly_Show_with_Larry_Wilmore        
+## Today                                      
+## Anderson_Cooper_Three_Hundred_and_Sixty    
+## CBS_This_Morning                           
+## Hardball_with_Chris_Matthews               
+## On_the_Record_with_Greta_Van_Susteren      
+## The_Rachel_Maddow_Show                     
+## Good_Morning_America                       
+## Nancy_Grace                                
+## Erin_Burnett_OutFront                      
+## The_O_Reilly_Factor                        
+## House_of_Cards                             
+## Game_of_Thrones                            
+## Madam_Secretary                         ** 
+## Scandal                                    
+## Alpha_House                                
+## The_Blacklist                              
+## Criminal_Minds                          *  
+## NCIS                                    .  
+## Scorpion                                   
+## Judge_Judy                                 
+## Daredevil                                  
+## Blue_bloods                                
+## Hawaii_Five_O                              
+## Empire                                     
+## Modern_Family                              
+## Sunday_Night_Football                      
+## The_Simpsons                            .  
+## Dancing_with_the_Stars                     
+## Shark_Tank                                 
+## The_Voice                               ** 
+## Conan                                      
+## The_Big_Bang_Theory                        
+## The_Tonight_Show_Starring_Jimmy_Fallon     
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3127 on 3609 degrees of freedom
+##   (613 observations deleted due to missingness)
+## Multiple R-squared:  0.02254,    Adjusted R-squared:  0.009808 
+## F-statistic:  1.77 on 47 and 3609 DF,  p-value: 0.000986</code></pre>
+<pre class="r"><code>coefplot::coefplot (All_Variables_Moded_register_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+<div id="regression-for-traditional-political-news-programs-and-turnout-grouped" class="section level3">
+<h3>Regression for Traditional Political News Programs and Turnout Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+
+Traditional_Political_News_Programs_Moded_vote_grouped &lt;- as.data.frame(Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour) %&gt;%
+    rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+
+
+Traditional_Political_News_Programs_Moded_vote_grouped_lm &lt;- lm(vote ~  Traditional_Political_News_Programs_Moded_vote_grouped , data = anes_clean)
+
+summary(Traditional_Political_News_Programs_Moded_vote_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ Traditional_Political_News_Programs_Moded_vote_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.98659  0.01341  0.01395  0.01503  0.01826 
+## 
+## Coefficients:
+##                                                          Estimate Std. Error
+## (Intercept)                                             0.9865925  0.0032349
+## Traditional_Political_News_Programs_Moded_vote_grouped -0.0005392  0.0012025
+##                                                        t value Pr(&gt;|t|)    
+## (Intercept)                                            304.986   &lt;2e-16 ***
+## Traditional_Political_News_Programs_Moded_vote_grouped  -0.448    0.654    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  8.265e-05,  Adjusted R-squared:  -0.0003283 
+## F-statistic: 0.2011 on 1 and 2433 DF,  p-value: 0.6539</code></pre>
+<pre class="r"><code>coefplot::coefplot(Traditional_Political_News_Programs_Moded_vote_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+</div>
+<div id="regression-for-entertainment-or-opinion-political-news-programs-and-turnout-grouped" class="section level3">
+<h3>Regression for Entertainment or Opinion Political News Programs and Turnout Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped &lt;- as.data.frame(All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped_lm &lt;- lm(vote ~Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped , data = anes_clean)
+
+summary(Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.99250  0.01300  0.01520  0.01631  0.01631 
+## 
+## Coefficients:
+##                                                                     Estimate
+## (Intercept)                                                         0.983694
+## Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped 0.001101
+##                                                                     Std. Error
+## (Intercept)                                                           0.003305
+## Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped   0.001287
+##                                                                     t value
+## (Intercept)                                                         297.631
+## Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped   0.855
+##                                                                     Pr(&gt;|t|)
+## (Intercept)                                                           &lt;2e-16
+## Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped    0.392
+##                                                                        
+## (Intercept)                                                         ***
+## Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  0.0003006,  Adjusted R-squared:  -0.0001103 
+## F-statistic: 0.7316 on 1 and 2433 DF,  p-value: 0.3924</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>### Regression for Entertainment Programs that are Expressly Political and Turnout Grouped ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped &lt;- as.data.frame (House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped_lm &lt;- lm (vote ~ Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped , data = anes_clean)
+
+summary(Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.98666  0.01334  0.01334  0.01561  0.02243 
+## 
+## Coefficients:
+##                                                                         Estimate
+## (Intercept)                                                             0.986661
+## Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped -0.002274
+##                                                                        Std. Error
+## (Intercept)                                                              0.002827
+## Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped   0.003238
+##                                                                        t value
+## (Intercept)                                                            348.991
+## Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped  -0.702
+##                                                                        Pr(&gt;|t|)
+## (Intercept)                                                              &lt;2e-16
+## Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped    0.483
+##                                                                           
+## (Intercept)                                                            ***
+## Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  0.0002026,  Adjusted R-squared:  -0.0002083 
+## F-statistic: 0.4931 on 1 and 2433 DF,  p-value: 0.4826</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+</div>
+<div id="regresion-for-entertainment-programs-that-are-not-expressly-political-but-focus-on-a-salient-political-issue-and-turnout-grouped" class="section level3">
+<h3>Regresion for Entertainment Programs that are not Expressly Political but Focus on a Salient Political issue and Turnout Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped &lt;- as.data.frame(The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped_lm &lt;- lm(vote ~ Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped, data = anes_clean)
+
+summary(Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.98632  0.01368  0.01368  0.01500  0.01830 
+## 
+## Coefficients:
+##                                                                                                                     Estimate
+## (Intercept)                                                                                                        0.9863202
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped -0.0006598
+##                                                                                                                   Std. Error
+## (Intercept)                                                                                                        0.0030112
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped  0.0017127
+##                                                                                                                   t value
+## (Intercept)                                                                                                       327.552
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped  -0.385
+##                                                                                                                   Pr(&gt;|t|)
+## (Intercept)                                                                                                         &lt;2e-16
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped      0.7
+##                                                                                                                      
+## (Intercept)                                                                                                       ***
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  6.099e-05,  Adjusted R-squared:  -0.00035 
+## F-statistic: 0.1484 on 1 and 2433 DF,  p-value: 0.7001</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+</div>
+<div id="regresion-for-entertainment-programs-with-little-to-no-political-content-and-turnout-grouped" class="section level3">
+<h3>Regresion for Entertainment Programs with little to No Political Content and Turnout Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped &lt;- as.data.frame(Empire + Modern_Family + Sunday_Night_Football + The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped_lm &lt;- lm(vote ~ Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped , data = anes_clean)
+
+summary(Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.98622  0.01414  0.01450  0.01468  0.01468 
+## 
+## Coefficients:
+##                                                                                Estimate
+## (Intercept)                                                                   0.9853232
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped 0.0001796
+##                                                                               Std. Error
+## (Intercept)                                                                    0.0035571
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped  0.0015487
+##                                                                               t value
+## (Intercept)                                                                   277.000
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped   0.116
+##                                                                               Pr(&gt;|t|)
+## (Intercept)                                                                     &lt;2e-16
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped    0.908
+##                                                                                  
+## (Intercept)                                                                   ***
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  5.527e-06,  Adjusted R-squared:  -0.0004055 
+## F-statistic: 0.01345 on 1 and 2433 DF,  p-value: 0.9077</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+</div>
+<div id="regression-for-all-variables-and-turnout-grouped" class="section level3">
+<h3>Regression for All Variables and Turnout Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+
+All_Variables_Moded_vote_grouped &lt;- as.data.frame(Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour + All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor + House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House + The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O + Empire + Modern_Family + Sunday_Night_Football +  The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+All_Variables_Moded_vote_grouped_lm &lt;- lm(vote ~ All_Variables_Moded_vote_grouped ,  data = anes_clean)
+
+summary(All_Variables_Moded_vote_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ All_Variables_Moded_vote_grouped, data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.98575  0.01430  0.01436  0.01444  0.01481 
+## 
+## Coefficients:
+##                                    Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                       9.858e-01  4.143e-03 237.937   &lt;2e-16 ***
+## All_Variables_Moded_vote_grouped -1.883e-05  4.996e-04  -0.038     0.97    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  5.84e-07,   Adjusted R-squared:  -0.0004104 
+## F-statistic: 0.001421 on 1 and 2433 DF,  p-value: 0.9699</code></pre>
+<pre class="r"><code>coefplot::coefplot (All_Variables_Moded_vote_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+</div>
+<div id="regression-for-all-grouped-variables-grouped-and-turnout" class="section level3">
+<h3>Regression for All Grouped Variables Grouped and Turnout</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(vote = case_when(
+V162034 == 2 ~ 0,
+V162034 == 1 ~ 1))
+
+All_Variables_Moded_vote_grouped_grouped &lt;- as.data.frame(
+Traditional_Political_News_Programs_Moded_vote_grouped + 
+Entertainment_or_Opinion_Political_News_Programs_Moded_vote_grouped +
+Entertainment_Programs_that_are_Expressly_Political_Moded_vote_grouped + 
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_vote_grouped +
+Entertainment_Programs_with_little_to_No_Political_Content_moded_vote_grouped 
+)%&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+
+All_Variables_Moded_vote_grouped_grouped_lm &lt;- lm(vote ~ All_Variables_Moded_vote_grouped_grouped , data = anes_clean)
+
+summary (All_Variables_Moded_vote_grouped_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = vote ~ All_Variables_Moded_vote_grouped_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.98575  0.01430  0.01436  0.01444  0.01481 
+## 
+## Coefficients:
+##                                            Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)                               9.858e-01  4.143e-03 237.937   &lt;2e-16
+## All_Variables_Moded_vote_grouped_grouped -1.883e-05  4.996e-04  -0.038     0.97
+##                                             
+## (Intercept)                              ***
+## All_Variables_Moded_vote_grouped_grouped    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1191 on 2433 degrees of freedom
+##   (1835 observations deleted due to missingness)
+## Multiple R-squared:  5.84e-07,   Adjusted R-squared:  -0.0004104 
+## F-statistic: 0.001421 on 1 and 2433 DF,  p-value: 0.9699</code></pre>
+<pre class="r"><code>coefplot::coefplot (All_Variables_Moded_vote_grouped_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+</div>
+<div id="regression-for-traditional-political-news-programs-and-registration-status-grouped" class="section level3">
+<h3>Regression for Traditional Political News Programs and Registration Status Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Traditional_Political_News_Programs_Moded_register_grouped &lt;- as.data.frame(Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Traditional_Political_News_Programs_Moded_register_grouped_lm &lt;- lm(register ~ Traditional_Political_News_Programs_Moded_register_grouped, data = anes_clean)
+
+summary(Traditional_Political_News_Programs_Moded_register_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Traditional_Political_News_Programs_Moded_register_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.92766  0.09575  0.10746  0.11917  0.11917 
+## 
+## Coefficients:
+##                                                            Estimate Std. Error
+## (Intercept)                                                0.880834   0.007305
+## Traditional_Political_News_Programs_Moded_register_grouped 0.005853   0.002735
+##                                                            t value Pr(&gt;|t|)    
+## (Intercept)                                                 120.58   &lt;2e-16 ***
+## Traditional_Political_News_Programs_Moded_register_grouped    2.14   0.0324 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3113 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.001415,   Adjusted R-squared:  0.001106 
+## F-statistic:  4.58 on 1 and 3233 DF,  p-value: 0.03242</code></pre>
+<pre class="r"><code>coefplot::coefplot(Traditional_Political_News_Programs_Moded_register_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+### Regression for Entertainment or Opinion Political News Programs and Registration Status Grouped ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped &lt;- as.data.frame (All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped_lm &lt;- lm (register ~ Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped , data = anes_clean)
+
+summary(Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.95622  0.09268  0.10665  0.12062  0.12062 
+## 
+## Coefficients:
+##                                                                         Estimate
+## (Intercept)                                                             0.879375
+## Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped 0.006986
+##                                                                         Std. Error
+## (Intercept)                                                               0.007415
+## Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped   0.002959
+##                                                                         t value
+## (Intercept)                                                             118.595
+## Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped   2.361
+##                                                                         Pr(&gt;|t|)
+## (Intercept)                                                               &lt;2e-16
+## Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped   0.0183
+##                                                                            
+## (Intercept)                                                             ***
+## Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3112 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.001721,   Adjusted R-squared:  0.001413 
+## F-statistic: 5.575 on 1 and 3233 DF,  p-value: 0.01828</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-18-1.png" width="672" />
+### Regression for Entertainment Programs that are Expressly Political and Registration Staus Grouped ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped &lt;- as.data.frame(House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped_lm &lt;- lm(register ~ Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped , data = anes_clean)
+
+summary(Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.9232  0.1018  0.1143  0.1143  0.1143 
+## 
+## Coefficients:
+##                                                                            Estimate
+## (Intercept)                                                                0.885731
+## Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped 0.012490
+##                                                                            Std. Error
+## (Intercept)                                                                  0.006368
+## Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped   0.007443
+##                                                                            t value
+## (Intercept)                                                                139.090
+## Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped   1.678
+##                                                                            Pr(&gt;|t|)
+## (Intercept)                                                                  &lt;2e-16
+## Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped   0.0934
+##                                                                               
+## (Intercept)                                                                ***
+## Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped .  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3114 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.0008703,  Adjusted R-squared:  0.0005612 
+## F-statistic: 2.816 on 1 and 3233 DF,  p-value: 0.09342</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-19-1.png" width="672" />
+### Regresion for Entertainment Programs that are not Expressly Political but Focus on a salient Political issue and Registration Status Grouped ###</p>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped &lt;- as.data.frame( The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped_lm &lt;- lm(register ~ Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped , data = anes_clean)
+
+summary(Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.95431  0.08808  0.10928  0.11988  0.11988 
+## 
+## Coefficients:
+##                                                                                                                       Estimate
+## (Intercept)                                                                                                           0.880124
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped 0.010598
+##                                                                                                                       Std. Error
+## (Intercept)                                                                                                             0.006836
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped   0.003926
+##                                                                                                                       t value
+## (Intercept)                                                                                                           128.745
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped   2.699
+##                                                                                                                       Pr(&gt;|t|)
+## (Intercept)                                                                                                            &lt; 2e-16
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped  0.00699
+##                                                                                                                          
+## (Intercept)                                                                                                           ***
+## Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3111 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.002249,   Adjusted R-squared:  0.00194 
+## F-statistic: 7.286 on 1 and 3233 DF,  p-value: 0.006986</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+</div>
+<div id="regresion-for-entertainment-programs-with-little-to-no-political-content-and-registration-status-grouped" class="section level3">
+<h3>Regresion for Entertainment Programs with little to No Political Content and Registration Status Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped &lt;- as.data.frame(Empire + Modern_Family + Sunday_Night_Football + The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped_lm &lt;- lm(register ~ Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped , anes_clean)
+
+summary(Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.90413  0.09587  0.10364  0.11142  0.16582 
+## 
+## Coefficients:
+##                                                                                    Estimate
+## (Intercept)                                                                        0.904128
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped -0.007772
+##                                                                                   Std. Error
+## (Intercept)                                                                         0.007939
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped   0.003456
+##                                                                                   t value
+## (Intercept)                                                                       113.878
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped  -2.249
+##                                                                                   Pr(&gt;|t|)
+## (Intercept)                                                                         &lt;2e-16
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped   0.0246
+##                                                                                      
+## (Intercept)                                                                       ***
+## Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3113 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.001562,   Adjusted R-squared:  0.001254 
+## F-statistic: 5.059 on 1 and 3233 DF,  p-value: 0.02456</code></pre>
+<pre class="r"><code>coefplot::coefplot(Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+</div>
+<div id="regression-for-all-variables-and-registration-status-grouped" class="section level3">
+<h3>Regression for All Variables and Registration Status Grouped</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+
+All_Variables_Moded_register_grouped &lt;- as.data.frame(Twenty_Twenty + CBS_Evening_News_with_Scott_Pelley + Sixty_Minutes + Face_the_Nation + Meet_the_Press + NBC_Nightly_News_with_Lester_Holt + ABC_World_News_with_David_Muir + Dateline_NBC + PBS_News_Hour + All_In_with_Chris_Hayes + Hannity + Jimmy_Kimmel_Live + The_Kelly_File + The_Nightly_Show_with_Larry_Wilmore + Today + Anderson_Cooper_Three_Hundred_and_Sixty + CBS_This_Morning + Hardball_with_Chris_Matthews + On_the_Record_with_Greta_Van_Susteren + The_Rachel_Maddow_Show + Good_Morning_America + Nancy_Grace + Erin_Burnett_OutFront + The_O_Reilly_Factor + House_of_Cards + Game_of_Thrones + Madam_Secretary + Scandal + Alpha_House + The_Blacklist + Criminal_Minds + NCIS + Scorpion + Judge_Judy + Daredevil + Blue_bloods + Hawaii_Five_O + Empire + Modern_Family + Sunday_Night_Football +  The_Simpsons + Dancing_with_the_Stars + Shark_Tank + The_Voice + Conan + The_Big_Bang_Theory + The_Tonight_Show_Starring_Jimmy_Fallon) %&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+All_Variables_Moded_register_grouped_lm &lt;- lm(register ~ All_Variables_Moded_register_grouped , data = anes_clean)
+
+summary(All_Variables_Moded_register_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ All_Variables_Moded_register_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.93789  0.09823  0.10786  0.11749  0.12472 
+## 
+## Coefficients:
+##                                      Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                          0.875281   0.009328  93.833   &lt;2e-16 ***
+## All_Variables_Moded_register_grouped 0.002408   0.001143   2.106   0.0353 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3113 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.00137,    Adjusted R-squared:  0.001061 
+## F-statistic: 4.436 on 1 and 3233 DF,  p-value: 0.03527</code></pre>
+<pre class="r"><code>coefplot::coefplot (All_Variables_Moded_register_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+</div>
+<div id="regression-for-all-variables-grouped-grouped-registration-status" class="section level3">
+<h3>Regression for All Variables Grouped Grouped Registration Status</h3>
+<pre class="r"><code>clean &lt;- function(x){ifelse (x &lt; 0, NA, x)}
+anes_clean &lt;- anes16 %&gt;%
+    mutate(across (everything(), clean)) %&gt;%
+
+mutate(register = case_when(
+V161011 == 2 ~ 0,
+V161011 == 1 ~ 1))
+
+All_Variables_Moded_register_grouped_grouped &lt;- as.data.frame (Traditional_Political_News_Programs_Moded_register_grouped +
+Entertainment_or_Opinion_Political_News_Programs_Moded_register_grouped +
+Entertainment_Programs_that_are_Expressly_Political_Moded_register_grouped +
+Entertainment_Programs_that_are_not_Expressly_Political_but_Focus_on_a_salient_Political_issue_Moded_register_grouped +
+Entertainment_Programs_with_little_to_No_Political_Content_moded_register_grouped)%&gt;%
+rename(count = 1) %&gt;%
+    mutate(count = ifelse(count &lt;0, NA, count)) %&gt;% unlist()
+
+All_Variables_Moded_register_grouped_grouped_lm &lt;- lm(register ~ All_Variables_Moded_register_grouped_grouped , data = anes_clean)
+
+summary(All_Variables_Moded_register_grouped_grouped_lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = register ~ All_Variables_Moded_register_grouped_grouped, 
+##     data = anes_clean)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.93789  0.09823  0.10786  0.11749  0.12472 
+## 
+## Coefficients:
+##                                              Estimate Std. Error t value
+## (Intercept)                                  0.875281   0.009328  93.833
+## All_Variables_Moded_register_grouped_grouped 0.002408   0.001143   2.106
+##                                              Pr(&gt;|t|)    
+## (Intercept)                                    &lt;2e-16 ***
+## All_Variables_Moded_register_grouped_grouped   0.0353 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3113 on 3233 degrees of freedom
+##   (1035 observations deleted due to missingness)
+## Multiple R-squared:  0.00137,    Adjusted R-squared:  0.001061 
+## F-statistic: 4.436 on 1 and 3233 DF,  p-value: 0.03527</code></pre>
+<pre class="r"><code>coefplot::coefplot (All_Variables_Moded_register_grouped_grouped_lm)</code></pre>
+<p><img src="public/post/How-TV-Affected-Registration_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p>Just like with my last post my prediction was dead wrong. In fact these shows had a very different affect on registration that they did on turnout. Way more shows individually had a significant (at the 5% level) affect on registration than turnout, and furthermore each group of shows had a significant effect on registration. This is very different than with turnout where none of the groups together or alone had an affect on turnout. Even without controlling for other variables it seems that these shows have an impact on whether watchers are registered to vote. It is not clear why that is the case or why they have such a stronger affect on registration than on turnout. This could have interesting implications for campaigns it could perhaps mean that campaigns should use TV ad buys to focus on registering watchers rather than turnout if advertising is a factor in the affect these shows had on registration it could be that is the shows themselves and political advertising has no impact on the effect these shows have on registration. I think that my future project that will look at the affect on turnout per dollar per person could also apply here excpet it would be affect on registration per dollar per person. I would also like to do a project where I look at the effect that streamed shows without have on turnout and registration versus the effect that shows without ads have on turnout and registration to see whether advertising is a factor at all in the affect these shows (or others) have on turnout and registration. Again this is a work in progress we still need to control for other factors, clean up the code and graphs, and this was done with an unsophisticated linear regression model by sudents without strong backgrounds in statistics.</p>
+</div>
